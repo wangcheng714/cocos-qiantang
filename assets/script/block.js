@@ -20,6 +20,8 @@ cc.Class({
     setTouchEvent() {
         this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
             cc.log('touch_start');
+            const range = this.getBlockMoveRange();
+            console.log(range);
         }, this);
         this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
             if (this.direction === 'x') { //只能X轴移动
@@ -44,6 +46,59 @@ cc.Class({
             this.setBlockPosition(this.x, this.y);
             Game.updateBlockHolder();
         }, this);
+    },
+
+    //获取block最大可移动的范围
+    getBlockMoveRange() {
+        const hackBlockX = this.x + 3;
+        const hackBlockY = this.y + 3;
+        let maxRange = 0;
+        let minRange = 0;
+        const range = {
+            min: minRange,
+            max: maxRange,
+        }
+        if (this.direction === 'x') {
+            let preXPlace = this.getBlockHolderValue(hackBlockX - minRange - 1, hackBlockY);
+            let nextXPlace = this.getBlockHolderValue(hackBlockX + this.blockWidth + maxRange, hackBlockY);
+            while(preXPlace === 0) {
+                minRange++;
+                preXPlace = this.getBlockHolderValue(hackBlockX - minRange - 1, hackBlockY);
+            }
+            while(nextXPlace === 0) {
+                maxRange++;
+                nextXPlace = this.getBlockHolderValue(hackBlockX + this.blockWidth + maxRange, hackBlockY);
+            }
+            range.min = hackBlockX - minRange;
+            range.max = hackBlockX + this.blockWidth + maxRange - 1;
+        } else {
+            let preIndex = hackBlockY - minRange - 1;
+            let preYValue = this.getBlockHolderValue(hackBlockX, preIndex);
+            let nextIndex = hackBlockY + this.blockHeight + maxRange;
+            let nextYValue = this.getBlockHolderValue(hackBlockX, nextIndex);
+            while(preIndex >= 0 && preYValue === 0) {
+                minRange++;
+                preIndex = hackBlockY - minRange - 1;
+                preYValue = this.getBlockHolderValue(hackBlockX, hackBlockY - minRange - 1);
+            }
+            while(nextIndex < Global.blockCount && nextYValue === 0) {
+                maxRange++;
+                nextIndex = hackBlockY + this.blockHeight + maxRange;
+                nextYValue = this.getBlockHolderValue(hackBlockX, hackBlockY + this.blockHeight + maxRange);
+            }
+            range.min = hackBlockY - minRange;
+            range.max = hackBlockY + this.blockHeight + maxRange - 1;
+        }
+        return range;
+    },
+
+    getBlockHolderValue(x, y) {
+        if (x >= 0 && x < Global.blockCount && y >= 0 && y < Global.blockCount) {
+            return Game.blockHolder[y][x];
+        } else {
+            cc.log(`x = ${x}，y = ${y}，越界了！`);
+            return null;
+        }
     },
 
     //初始化一个木块：每次创建一个block的时候需要调用
