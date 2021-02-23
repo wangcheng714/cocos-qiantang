@@ -20,19 +20,34 @@ cc.Class({
     setTouchEvent() {
         this.node.on(cc.Node.EventType.TOUCH_START, (event) => {
             cc.log('touch_start');
-            const range = this.getBlockMoveRange();
-            console.log(range);
+            this.range = this.getBlockMoveRange();
+            console.log(this.range);
         }, this);
         this.node.on(cc.Node.EventType.TOUCH_MOVE, (event) => {
             if (this.direction === 'x') { //只能X轴移动
+                let targetXPosition = this.node.getPosition().x + event.getDelta().x;
+                console.log(targetXPosition + this.blockWidth * Global.blockSize);
+                if (targetXPosition + this.blockWidth * Global.blockSize > this.range.maxPosition + 8) {
+                    return ;
+                }
+                if (targetXPosition < this.range.minPosition - 8) {
+                    return ;
+                }
                 this.node.setPosition(cc.v2(
-                    this.node.getPosition().x + event.getDelta().x,
+                    targetXPosition,
                     this.node.getPosition().y,
                 ));
             } else if(this.direction === 'y'){ //只能Y轴移动
+                let targetYPosition = this.node.getPosition().y + event.getDelta().y;
+                if (targetYPosition + this.blockHeight * Global.blockSize > this.range.maxPosition + 8) {
+                    return ;
+                }
+                if (targetYPosition < this.range.minPosition - 8) {
+                    return ;
+                }
                 this.node.setPosition(cc.v2(
                     this.node.getPosition().x,
-                    this.node.getPosition().y + event.getDelta().y,
+                    targetYPosition,
                 ));
             }
         }, this);
@@ -89,6 +104,8 @@ cc.Class({
             range.min = hackBlockY - minRange;
             range.max = hackBlockY + this.blockHeight + maxRange - 1;
         }
+        range.maxPosition = (range.max - 3 + 1) * (Global.blockSize + Global.blockGap);
+        range.minPosition = (range.min - 3) * (Global.blockSize + Global.blockGap);
         return range;
     },
 
